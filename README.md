@@ -1,2 +1,4 @@
-# Car-Crash-Detector-Simulator
-CCDS
+# Car Crash Detector Simulator
+## CCDS - Эмулятор ошибок по типу телефон перегрелся, но написанный на HTML и подходящий для всех* устройств, от ПК до PSP
+
+* - почти всех
