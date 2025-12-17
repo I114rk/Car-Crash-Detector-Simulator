@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
@@ -13,24 +13,18 @@
             --text-secondary: #aaa;
         }
 
+        /* Запрет выделения везде */
         * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
+            margin: 0; padding: 0; box-sizing: border-box;
             font-family: 'Roboto', sans-serif;
             -webkit-tap-highlight-color: transparent;
-            user-select: none; 
-            -webkit-user-select: none;
+            user-select: none; -webkit-user-select: none;
         }
 
         body {
-            background-color: var(--bg-color);
-            color: var(--text-main);
-            height: 100vh;
-            width: 100vw;
-            overflow: hidden;
-            display: flex;
-            justify-content: center;
+            background-color: var(--bg-color); color: var(--text-main);
+            height: 100vh; width: 100vw; overflow: hidden;
+            display: flex; justify-content: center;
         }
 
         .screen { display: none; width: 100%; height: 100%; flex-direction: column; }
@@ -38,29 +32,27 @@
 
         /* НАСТРОЙКИ */
         #settings-screen {
-            padding: 30px;
-            overflow-y: auto;
-            max-width: 500px;
-            background: #1a1a1a;
-            user-select: auto;
-            -webkit-user-select: auto;
+            padding: 30px; overflow-y: auto; max-width: 500px;
+            background: #1a1a1a; user-select: auto; -webkit-user-select: auto;
         }
         #settings-screen * { user-select: auto; }
 
+        h2 { margin-bottom: 20px; color: var(--accent-green); }
         .setting-item { margin-bottom: 15px; display: flex; flex-direction: column; }
         .setting-item label { font-size: 11px; color: var(--accent-green); margin-bottom: 5px; text-transform: uppercase; }
 
-        input {
+        input, select {
             background: #222; border: 1px solid #444; color: white;
-            padding: 12px; border-radius: 8px; outline: none;
-            transition: border-color 0.3s;
+            padding: 12px; border-radius: 8px; outline: none; font-size: 16px;
         }
-        input:focus { border-color: var(--accent-green); }
+
+        .file-input-wrapper { margin-top: 10px; display: none; }
+        .file-input-wrapper.visible { display: block; }
 
         .start-btn {
             background: var(--accent-green); color: black; border: none;
             padding: 15px; border-radius: 8px; font-weight: bold; cursor: pointer;
-            margin-top: 10px; font-size: 16px;
+            margin-top: 20px; width: 100%; font-size: 18px;
         }
 
         /* ИНТЕРФЕЙС ДЕТЕКЦИИ */
@@ -71,10 +63,14 @@
         .timer-display {
             flex-grow: 1; display: flex; justify-content: center; align-items: center;
             font-size: clamp(100px, 22vh, 250px); font-weight: 300;
+            transition: opacity 0.3s;
         }
+        .paused .timer-display { opacity: 0.5; animation: blink 1s infinite; }
+
+        @keyframes blink { 50% { opacity: 0.1; } }
 
         /* СЛАЙДЕРЫ */
-        .sliders-container { display: flex; flex-direction: column; gap: 2.5vh; padding-bottom: 4vh; }
+        .sliders-container { display: flex; flex-direction: column; gap: 2.5vh; padding-bottom: 2vh; }
         .slider-track {
             position: relative; width: 100%; height: 9vh; background: rgba(255,255,255,0.1);
             border-radius: 50px; display: flex; align-items: center; padding: 0 10px; overflow: hidden;
@@ -88,41 +84,42 @@
         .handle-red { background: var(--accent-red); color: white; }
         .slider-val { margin-left: auto; margin-right: 20px; font-weight: bold; }
 
-        /* СКРЫТАЯ ПАНЕЛЬ УПРАВЛЕНИЯ */
-        #playback-controls {
-            position: fixed; bottom: 20px; right: 20px;
-            display: flex; gap: 10px; padding: 10px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 12px; backdrop-filter: blur(10px);
-            opacity: 0; transition: opacity 0.5s ease;
-            z-index: 100;
+        /* КОПИРАЙТ */
+        .copyright {
+            text-align: center; font-size: 12px; color: #555;
+            padding-bottom: 2vh; user-select: none;
         }
-        #playback-controls.visible { opacity: 1; }
-        
-        .control-btn {
-            background: rgba(255,255,255,0.2); border: none; color: white;
-            padding: 10px 15px; border-radius: 6px; cursor: pointer; font-size: 14px;
-        }
-        .control-btn:hover { background: rgba(255,255,255,0.3); }
-
-        #hover-zone { position: fixed; bottom: 0; left: 0; width: 100%; height: 80px; z-index: 99; }
+        .copyright a { color: #777; text-decoration: none; pointer-events: auto; }
     </style>
 </head>
 <body>
 
-    <audio id="bg-music" loop><source src="music.mp3" type="audio/mpeg"></audio>
+    <audio id="main-audio" loop></audio>
 
     <div id="settings-screen" class="screen active">
         <h2>Настройки</h2>
-        <div class="setting-item"><label>Заголовок</label><input type="text" id="in-title" placeholder="Car crash detected"></div>
-        <div class="setting-item"><label>Описание</label><input type="text" id="in-sub" placeholder="Google Voice Assistant doesn't work."></div>
-        <div class="setting-item"><label>Текст слайдера ОК</label><input type="text" id="in-ok-txt" placeholder="Я в порядке"></div>
-        <div class="setting-item"><label>Текст слайдера Отмена</label><input type="text" id="in-cancel-txt" placeholder="Отмена / Вызов"></div>
-        <div class="setting-item"><label>Время (сек)</label><input type="number" id="in-timer" value="30"></div>
-        <button class="start-btn" onclick="saveAndStart()">ЗАПУСТИТЬ</button>
-        <p style="font-size: 10px; color: #555; margin-top: 15px; text-align: center;">Настройки сохраняются автоматически</p>
-        <p>&copy; 2025 I114rk. Все права защищены. По вопросам использования обращайтесь: <a href="mailto:vanyel870@gmail.com">ПОЧТА</a></p>
+        <div class="setting-item"><label>Заголовок</label><input type="text" id="in-title"></div>
+        <div class="setting-item"><label>Описание</label><input type="text" id="in-sub"></div>
+        <div class="setting-item"><label>Текст слайдера ОК</label><input type="text" id="in-ok-txt"></div>
+        <div class="setting-item"><label>Текст слайдера Отмена</label><input type="text" id="in-cancel-txt"></div>
+        <div class="setting-item"><label>Время (сек)</label><input type="number" id="in-timer"></div>
+        
+        <div class="setting-item">
+            <label>Звук</label>
+            <select id="sound-mode" onchange="toggleFileOpener()">
+                <option value="default">Стандартный (music.mp3)</option>
+                <option value="custom">Загрузить свой звук</option>
+            </select>
+            <div id="file-wrapper" class="file-input-wrapper">
+                <input type="file" id="audio-file" accept="audio/*">
+            </div>
+        </div>
 
+        <button class="start-btn" onclick="saveAndStart()">ЗАПУСТИТЬ</button>
+        
+        <div class="copyright" style="margin-top: 30px;">
+            © I114rk | <a href="mailto:vanyel870@gmail.com">vanyel870@gmail.com</a>
+        </div>
     </div>
 
     <div id="detect-screen" class="screen">
@@ -131,6 +128,7 @@
             <p id="out-sub"></p>
         </div>
         <div class="timer-display" id="main-timer">30</div>
+        
         <div class="sliders-container">
             <div class="slider-track" id="track-ok">
                 <div class="slider-handle handle-green" id="handle-ok">✓</div>
@@ -143,48 +141,61 @@
                 <div class="slider-val timer-sync">30</div>
             </div>
         </div>
+
+        <div class="copyright">
+            © I114rk | vanyel870@gmail.com
+        </div>
     </div>
 
     <script>
         let timeLeft;
         let timerInterval;
         let isPaused = false;
-        let hideTimeout;
-        const music = document.getElementById('bg-music');
-        const controls = document.getElementById('playback-controls');
+        const audio = document.getElementById('main-audio');
+        const STORAGE_KEY = 'crash_app_final_settings';
 
-        // Ключи для сохранения
-        const STORAGE_KEY = 'crash_app_settings';
-
-        // 1. Загрузка настроек при старте
         window.onload = () => {
             const saved = localStorage.getItem(STORAGE_KEY);
-            if (saved) {
-                const data = JSON.parse(saved);
-                document.getElementById('in-title').value = data.title || "";
-                document.getElementById('in-sub').value = data.sub || "";
-                document.getElementById('in-ok-txt').value = data.okTxt || "";
-                document.getElementById('in-cancel-txt').value = data.cancelTxt || "";
-                document.getElementById('in-timer').value = data.timer || "30";
-            } else {
-                // Дефолтные значения, если пусто
-                document.getElementById('in-title').value = "Car crash detected";
-                document.getElementById('in-sub').value = "Google Voice Assistant doesn't work.";
-                document.getElementById('in-ok-txt').value = "Я в порядке";
-                document.getElementById('in-cancel-txt').value = "Отмена / Вызов";
-            }
+            const data = saved ? JSON.parse(saved) : {
+                title: "Car crash detected",
+                sub: "Google Voice Assistant doesn't work.",
+                okTxt: "Я в порядке",
+                cancelTxt: "Отмена / Вызов",
+                timer: "30",
+                soundMode: "default"
+            };
+            
+            document.getElementById('in-title').value = data.title;
+            document.getElementById('in-sub').value = data.sub;
+            document.getElementById('in-ok-txt').value = data.okTxt;
+            document.getElementById('in-cancel-txt').value = data.cancelTxt;
+            document.getElementById('in-timer').value = data.timer;
+            document.getElementById('sound-mode').value = data.soundMode;
+            toggleFileOpener();
         };
 
-        // 2. Сохранение и запуск
+        function toggleFileOpener() {
+            const mode = document.getElementById('sound-mode').value;
+            document.getElementById('file-wrapper').className = (mode === 'custom') ? 'file-input-wrapper visible' : 'file-input-wrapper';
+        }
+
         function saveAndStart() {
             const settings = {
                 title: document.getElementById('in-title').value,
                 sub: document.getElementById('in-sub').value,
                 okTxt: document.getElementById('in-ok-txt').value,
                 cancelTxt: document.getElementById('in-cancel-txt').value,
-                timer: document.getElementById('in-timer').value
+                timer: document.getElementById('in-timer').value,
+                soundMode: document.getElementById('sound-mode').value
             };
             localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
+
+            if (settings.soundMode === 'custom') {
+                const file = document.getElementById('audio-file').files[0];
+                if (file) { audio.src = URL.createObjectURL(file); } 
+                else { alert("Выберите аудиофайл"); return; }
+            } else { audio.src = 'music.mp3'; }
+
             startApp(settings);
         }
 
@@ -198,30 +209,28 @@
             document.getElementById('settings-screen').classList.remove('active');
             document.getElementById('detect-screen').classList.add('active');
 
-            music.play().catch(() => console.log("Music blocked by browser. Click anywhere."));
+            audio.play().catch(() => {});
             updateUI();
-            startTimer();
+            runTimer();
 
-            initSlider('handle-ok', 'track-ok', () => end("Вы подтвердили: ОК"));
-            initSlider('handle-cancel', 'track-cancel', () => end("Вызов экстренных служб"));
+            initSlider('handle-ok', 'track-ok', () => end("ОК"));
+            initSlider('handle-cancel', 'track-cancel', () => end("Вызов"));
         }
 
-        /* --- Логика управления (Пауза, Таймер, Слайдеры) аналогична предыдущей --- */
+        function runTimer() {
+            timerInterval = setInterval(() => {
+                if (!isPaused) {
+                    timeLeft--;
+                    updateUI();
+                    if (timeLeft <= 0) { clearInterval(timerInterval); end("Время вышло!"); }
+                }
+            }, 1000);
+        }
 
         function togglePause() {
             isPaused = !isPaused;
-            const btn = document.getElementById('btn-pause-ui');
-            if (isPaused) {
-                clearInterval(timerInterval);
-                music.pause();
-                btn.innerText = "Продолжить";
-                controls.classList.add('visible');
-            } else {
-                startTimer();
-                music.play();
-                btn.innerText = "Пауза";
-                showControls();
-            }
+            if (isPaused) { audio.pause(); document.getElementById('detect-screen').classList.add('paused'); } 
+            else { audio.play(); document.getElementById('detect-screen').classList.remove('paused'); }
         }
 
         window.addEventListener('keydown', (e) => {
@@ -230,17 +239,6 @@
             }
         });
 
-        function startTimer() {
-            timerInterval = setInterval(() => {
-                timeLeft--;
-                updateUI();
-                if (timeLeft <= 0) {
-                    clearInterval(timerInterval);
-                    end("Время вышло!");
-                }
-            }, 1000);
-        }
-
         function updateUI() {
             document.getElementById('main-timer').innerText = timeLeft;
             document.querySelectorAll('.timer-sync').forEach(el => el.innerText = timeLeft);
@@ -248,18 +246,10 @@
 
         function end(msg) {
             clearInterval(timerInterval);
-            music.pause();
+            audio.pause();
             alert(msg);
             location.reload(); 
         }
-
-        function showControls() {
-            controls.classList.add('visible');
-            clearTimeout(hideTimeout);
-            hideTimeout = setTimeout(() => { if (!isPaused) controls.classList.remove('visible'); }, 5000);
-        }
-
-        window.addEventListener('mousemove', (e) => { if (e.clientY > window.innerHeight * 0.8) showControls(); });
 
         function initSlider(handleId, trackId, callback) {
             const handle = document.getElementById(handleId);
@@ -267,38 +257,36 @@
             let isDragging = false;
             let startX = 0;
 
-            const onStart = (e) => {
+            const move = (e) => {
+                if (!isDragging || isPaused) return;
+                let x = (e.type === 'touchmove') ? e.touches[0].clientX : e.clientX;
+                let delta = x - startX;
+                let max = track.offsetWidth - handle.offsetWidth - 20;
+                if (delta < 0) delta = 0;
+                if (delta >= max) { isDragging = false; callback(); return; }
+                handle.style.transform = `translateX(${delta}px)`;
+            };
+
+            const start = (e) => {
                 if (isPaused) return;
                 isDragging = true;
                 startX = (e.type === 'touchstart') ? e.touches[0].clientX : e.clientX;
                 handle.style.transition = 'none';
             };
 
-            const onMove = (e) => {
-                if (!isDragging || isPaused) return;
-                let currentX = (e.type === 'touchmove') ? e.touches[0].clientX : e.clientX;
-                let deltaX = currentX - startX;
-                let maxDelta = track.offsetWidth - handle.offsetWidth - 20;
-                if (deltaX < 0) deltaX = 0;
-                if (deltaX >= maxDelta) { isDragging = false; callback(); return; }
-                handle.style.transform = `translateX(${deltaX}px)`;
-            };
-
-            const onEnd = () => {
+            const stop = () => {
                 isDragging = false;
                 handle.style.transition = 'transform 0.3s ease';
                 handle.style.transform = 'translateX(0px)';
             };
 
-            handle.addEventListener('mousedown', onStart);
-            handle.addEventListener('touchstart', onStart);
-            window.addEventListener('mousemove', onMove);
-            window.addEventListener('touchmove', onMove, {passive: false});
-            window.addEventListener('mouseup', onEnd);
-            window.addEventListener('touchend', onEnd);
+            handle.addEventListener('mousedown', start);
+            handle.addEventListener('touchstart', start);
+            window.addEventListener('mousemove', move);
+            window.addEventListener('touchmove', move, {passive: false});
+            window.addEventListener('mouseup', stop);
+            window.addEventListener('touchend', stop);
         }
     </script>
 </body>
-
 </html>
-
